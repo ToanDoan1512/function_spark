@@ -17,6 +17,7 @@ class ETLDataPostgresToDeltaTable():
                  bucket_name: str,
                  source: str,
                  table: str,
+                 column_checkpoint: str,
                  data_source: str,
                  *args, **kwargs):
         self.url_postgres = url_postgres
@@ -27,6 +28,7 @@ class ETLDataPostgresToDeltaTable():
         self.bucket_name = bucket_name
         self.table = table
         self.source = source
+        self.column_checkpoint = column_checkpoint
         self.target_path = f"s3a://{bucket_name}/{data_source}/{source}/{table}"
 
     
@@ -51,10 +53,38 @@ class ETLDataPostgresToDeltaTable():
         print("A Spark session has been created.")
         LOGGER.info("A Spark session has been created.")
     
+    def get_checkpoint(self):
+        try:
+            df_target = self.spark.read.format("delta").load(self.target_path)
+            check_point = df_target.select(f"{self.column_checkpoint}") \
+                .orderBy(df_target.write_date.desc()) \
+                .limit(1) \
+                .collect()[0][0]
+            print(f"Checkpoint value: {check_point}")
+            LOGGER.info(f"Checkpoint value: {check_point}")
+            return check_point
+            
+        except AnalysisException as e:
+            LOGGER.error(f"Path not found: {self.target_path} - Error: {e}")
+            print("Checkpoint value: None")
+            LOGGER.info("Checkpoint value: None")
+            return None
 
-    def get_data_postgres(self):        
-
-        query = f"(SELECT * FROM public.{self.table}) AS temp_table"
+    def get_data_postgres(self, check_point):        
+        if check_point:
+            query = f"""
+                (SELECT * FROM public.{self.table} 
+                WHERE {self.column_checkpoint} >= '{check_point}' and {self.column_checkpoint} < '{self.year + 1}-01-01 00:00:00.00000'
+                ORDER BY {self.column_checkpoint} ASC
+                LIMIT 1000000) AS temp_table
+            """
+        else:
+            query = f"""
+                (SELECT * FROM public.{self.table}
+                WHERE {self.column_checkpoint} >= '{self.year}-01-01 00:00:00.00000' and {self.column_checkpoint} < '{self.year + 1}-01-01 00:00:00.00000'
+                ORDER BY {self.column_checkpoint} ASC
+                LIMIT 1000000) AS temp_table
+            """
         print(f"Execute SQL: {query}")
         LOGGER.info(f"Execute SQL: {query}")
         # Read data from PostgreSQL into Spark DataFrame
@@ -62,17 +92,25 @@ class ETLDataPostgresToDeltaTable():
         print("Successfully retrieved data from postgres")
         return df
     
-    def write_delta_table(self, df):
-        df.write.format("delta") \
-            .option("mergeSchema", "true") \
-            .mode("overwrite") \
-            .save(self.target_path)
+    def write_delta_table(self, df, check_point):
+        if check_point:
+            delta_table = DeltaTable.forPath(self.spark, self.target_path)
+            delta_table.alias("target").merge(
+                df.alias("source"),
+                "target.id = source.id"  # Điều kiện so khớp
+            ).whenMatchedUpdateAll() \
+            .whenNotMatchedInsertAll() \
+            .execute()
+        else:
+            df.write.format("delta") \
+                .option("mergeSchema", "true") \
+                .mode("append") \
+                .save(self.target_path)
         print("Successfully wrote data to the data lakehouse")
-        LOGGER.info("Successfully wrote data to the data lakehouse")
-        self.spark.stop()
-
-
+        LOGGER.info("Successfully wrote data to the data lakehouse")        
+    
     def main(self):
         self.pre_execute()
-        df = self.get_data_postgres()
-        self.write_delta_table(df)
+        check_point = self.get_checkpoint()
+        df = self.get_data_postgres(check_point)
+        self.write_delta_table(df, check_point)
