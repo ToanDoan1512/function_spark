@@ -74,16 +74,15 @@ class ETLDataPostgresToDeltaTable():
         if check_point:
             query = f"""
                 (SELECT * FROM public.{self.table} 
-                WHERE {self.column_checkpoint} >= '{check_point}' and {self.column_checkpoint} < '{self.year + 1}-01-01 00:00:00.00000'
+                WHERE {self.column_checkpoint} >= '{check_point}'
                 ORDER BY {self.column_checkpoint} ASC
-                LIMIT 1000000) AS temp_table
+                LIMIT 100000) AS temp_table
             """
         else:
             query = f"""
                 (SELECT * FROM public.{self.table}
-                WHERE {self.column_checkpoint} >= '{self.year}-01-01 00:00:00.00000' and {self.column_checkpoint} < '{self.year + 1}-01-01 00:00:00.00000'
                 ORDER BY {self.column_checkpoint} ASC
-                LIMIT 1000000) AS temp_table
+                LIMIT 100000) AS temp_table
             """
         print(f"Execute SQL: {query}")
         LOGGER.info(f"Execute SQL: {query}")
