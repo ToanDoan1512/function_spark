@@ -106,7 +106,8 @@ class ETLDataPostgresToDeltaTable():
                 .mode("append") \
                 .save(self.target_path)
         print("Successfully wrote data to the data lakehouse")
-        LOGGER.info("Successfully wrote data to the data lakehouse")        
+        LOGGER.info("Successfully wrote data to the data lakehouse")
+        self.spark.stop()
     
     def main(self):
         self.pre_execute()
