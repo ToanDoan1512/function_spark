@@ -51,8 +51,12 @@ class ETLDeltaTableToPostgres():
         LOGGER.info("A Spark session has been created.")
     
     def get_checkpoint(self):
-        df = self.spark.read.jdbc(url=self.url_postgres, table=self.table, properties=self.properties_postgres)
-        check_point = df.agg(spark_max(col(self.column_checkpoint)).alias("max_value")).collect()[0]["max_value"]
+        try:
+            df = self.spark.read.jdbc(url=self.url_postgres, table=self.table, properties=self.properties_postgres)
+            check_point = df.agg(spark_max(col(self.column_checkpoint)).alias("max_value")).collect()[0]["max_value"]
+        except: 
+            check_point = None
+            raise  
         print(f"Checkpoint value: {check_point}")
         LOGGER.info(f"Checkpoint value: {check_point}")
         return check_point
@@ -63,6 +67,7 @@ class ETLDeltaTableToPostgres():
             df = df.filter(col(self.column_checkpoint) >= check_point)
         else:
             df = self.spark.read.format("delta").load(self.source_path)
+        print("Successfully retrieved data from bronze layer")
         LOGGER.info("Successfully retrieved data from bronze layer")
         return df
     
