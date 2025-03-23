@@ -70,7 +70,7 @@ class ETLDataPostgresToDeltaTable():
                         rel.tag_id
                     FROM crm_tag_rel rel
                     WHERE rel.lead_id IN (SELECT id FROM changed_leads)
-                    OR rel.tag_id IN (SELECT id FROM changed_tags);) AS temp_table"""
+                    OR rel.tag_id IN (SELECT id FROM changed_tags)) AS temp_table"""
         print(f"Execute SQL: {query}")
         LOGGER.info(f"Execute SQL: {query}")
         # Read data from PostgreSQL into Spark DataFrame
