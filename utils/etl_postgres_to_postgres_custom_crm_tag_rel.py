@@ -11,23 +11,18 @@ class ETLDataPostgresToPostgres():
     def __init__(self,
                  url_postgres: str,
                  properties_postgres: str,
-                 endpoint_url: str,
-                 aws_access_key_id: str,
-                 aws_secret_access_key: str,
-                 bucket_name: str,
+                 url_postgres_mart: str,
+                 properties_postgres_mart: str,
                  source: str,
                  table: str,
                  data_source: str,
                  *args, **kwargs):
         self.url_postgres = url_postgres
         self.properties_postgres = properties_postgres
-        self.endpoint_url = endpoint_url
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
-        self.bucket_name = bucket_name
+        self.url_postgres_mart = url_postgres_mart
+        self.properties_postgres_mart = properties_postgres_mart
         self.table = table
         self.source = source
-        self.target_path = f"s3a://{bucket_name}/{data_source}/{source}/{table}"
 
     
     def pre_execute(self):
@@ -79,7 +74,7 @@ class ETLDataPostgresToPostgres():
         return df
     
     def write_temp_table(self, df):
-        df.write.jdbc(url=self.url_postgres, table=f"temp.{self.table}", mode="overwrite", properties=self.properties_postgres)
+        df.write.jdbc(url=self.url_postgres_mart, table=f"temp.{self.table}", mode="overwrite", properties=self.properties_postgres_mart)
         print("Successfully wrote data to the data mart")
         LOGGER.info("Successfully wrote data to the data mart")
         self.spark.stop()
