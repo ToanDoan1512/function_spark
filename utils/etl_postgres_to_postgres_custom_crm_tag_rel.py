@@ -79,7 +79,7 @@ class ETLDataPostgresToPostgres():
         return df
     
     def write_temp_table(self, df):
-        df.write.jdbc(url=self.url_postgres, table=f"temp.{self.table}", mode="overwrite", properties=self.properties_postgres)
+        df.write.jdbc(url=self.url_postgres, table=f"{self.table}", mode="overwrite", properties=self.properties_postgres)
         print("Successfully wrote data to the data mart")
         LOGGER.info("Successfully wrote data to the data mart")
         self.spark.stop()
