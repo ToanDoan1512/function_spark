@@ -28,19 +28,7 @@ class ETLDataPostgresToPostgres():
     def pre_execute(self):
 
         self.spark = SparkSession.builder \
-            .appName(f"{self.source}_to_{self.table}_{self.bucket_name}") \
-            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
-            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
-            .config("spark.hadoop.fs.s3a.access.key", self.aws_access_key_id) \
-            .config("spark.hadoop.fs.s3a.secret.key", self.aws_secret_access_key) \
-            .config("spark.hadoop.fs.s3a.endpoint", self.endpoint_url) \
-            .config("spark.hadoop.fs.s3a.path.style.access", "true") \
-            .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-            .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false") \
-            .config("spark.hadoop.fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider") \
-            .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
-            .config("spark.sql.parquet.int96RebaseModeInWrite", "CORRECTED") \
-            .config("spark.sql.parquet.datetimeRebaseModeInWrite", "CORRECTED") \
+            .appName(f"{self.source}_to_{self.table}_data_mart") \
             .getOrCreate()
         
         print("A Spark session has been created.")
