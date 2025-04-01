@@ -43,6 +43,7 @@ class OptimizeAndVacuumDeltTable():
             .config("spark.delta.logStore.class", "org.apache.spark.sql.delta.storage.S3SingleDriverLogStore") \
             .config("spark.sql.parquet.int96RebaseModeInWrite", "CORRECTED") \
             .config("spark.sql.parquet.datetimeRebaseModeInWrite", "CORRECTED") \
+            .config("spark.databricks.delta.retentionDurationCheck.enabled", "false") \
             .getOrCreate()
                 
         print("A Spark session has been created.")
@@ -56,7 +57,7 @@ class OptimizeAndVacuumDeltTable():
     
     def vacuum_delta_table(self):
         delta_table = DeltaTable.forPath(self.spark, self.source_path)
-        delta_table.vacuum(self.vacuum_time, retainDeletionVectors=False)
+        delta_table.vacuum(self.vacuum_time)
         print("Vacuum Delta Table completed.")
         LOGGER.info("Vacuum Delta Table completed.")
 
