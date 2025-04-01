@@ -58,7 +58,7 @@ class OptimizeAndVacuumDeltTable():
         delta_table = DeltaTable.forPath(self.spark, self.source_path)
         delta_table.vacuum(self.vacuum_time)
         print("Vacuum Delta Table completed.")
-        LOGGER.info("Vacuum Delta Table completed.")ss
+        LOGGER.info("Vacuum Delta Table completed.")
 
     def main(self):
         self.pre_execute()
