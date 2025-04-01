@@ -16,6 +16,7 @@ class OptimizeAndVacuumDeltTable():
                  data_source: str,
                  source: str,
                  table: str,
+                 vacuum_time: int,
                  *args, **kwargs):
         self.endpoint_url = endpoint_url
         self.aws_access_key_id = aws_access_key_id
@@ -23,6 +24,7 @@ class OptimizeAndVacuumDeltTable():
         self.bucket_name_source = bucket_name_source
         self.table = table
         self.source = source
+        self.vacuum_time = vacuum_time
         self.source_path = f"s3a://{bucket_name_source}/{data_source}/{source}/{table}"
     
     def pre_execute(self):
@@ -54,7 +56,7 @@ class OptimizeAndVacuumDeltTable():
     
     def vacuum_delta_table(self):
         delta_table = DeltaTable.forPath(self.spark, self.source_path)
-        delta_table.vacuum(72)
+        delta_table.vacuum(self.vacuum_time)
         print("Vacuum Delta Table completed.")
         LOGGER.info("Vacuum Delta Table completed.")ss
 
