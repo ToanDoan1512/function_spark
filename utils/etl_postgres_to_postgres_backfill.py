@@ -49,8 +49,7 @@ class ETLDataPostgresToPostgresBackfill():
         df.write.jdbc(url=self.url_postgres_mart, 
                         table=f"temp.{self.table}", 
                         mode="overwrite", 
-                        properties=self.properties_postgres_mart,
-                        batchsize=10000)
+                        properties=self.properties_postgres_mart)
         print("Successfully wrote data to the data mart")
         LOGGER.info("Successfully wrote data to the data mart")
         self.spark.stop()
