@@ -45,7 +45,6 @@ class ETLDataPostgresToPostgresBackfill():
         return df
     
     def write_temp_table(self, df):
-        df = df.repartition(10)
         df.write.jdbc(url=self.url_postgres_mart, 
                         table=f"temp.{self.table}", 
                         mode="overwrite", 
