@@ -36,7 +36,10 @@ class ETLDataPostgresToPostgresBackfill():
     
     def get_data_postgres(self):        
 
-        query = f"(SELECT * FROM public.{self.table} WHERE write_date < NOW() - INTERVAL '1 hour') AS temp_table"
+        query = f"""(SELECT * 
+                    FROM public.{self.table} 
+                    WHERE write_date >= '2024-01-01 00:00:00'
+                        AND write_date < NOW() - INTERVAL '1 hour') AS temp_table"""
         print(f"Execute SQL: {query}")
         LOGGER.info(f"Execute SQL: {query}")
         # Read data from PostgreSQL into Spark DataFrame
