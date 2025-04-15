@@ -17,7 +17,7 @@ class ETLDeltaTableToPostgresOverwrite():
                  data_source: str,
                  source: str,
                  table: str,
-                 tartget_host: str,
+                 target_host: str,
                  target_port: str,
                  target_database: str,
                  target_user: str,
@@ -32,7 +32,7 @@ class ETLDeltaTableToPostgresOverwrite():
         self.table = table
         self.source = source
         self.source_path = f"s3a://{bucket_name_source}/{data_source}/{source}/{table}"
-        self.tartget_host = tartget_host
+        self.target_host = target_host
         self.target_port = target_port
         self.target_database = target_database
         self.target_user = target_user
@@ -70,7 +70,7 @@ class ETLDeltaTableToPostgresOverwrite():
         # Establish psycopg2 connection to truncate table
         try:
             conn = psycopg2.connect(
-                host=self.tartget_host,
+                host=self.target_host,
                 port=self.target_port,
                 database=self.target_database,
                 user=self.target_user,
