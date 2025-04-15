@@ -2,10 +2,11 @@ import logging
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, date_trunc, date_format, max as spark_max
 from pyspark.errors.exceptions.captured import AnalysisException
+import psycopg2
 
 LOGGER = logging.getLogger(__name__)
 
-class ETLDeltaTableToPostgres():
+class ETLDeltaTableToPostgresOverwrite():
     def __init__(self,
                  url_postgres: str,
                  properties_postgres: dict,
@@ -16,6 +17,11 @@ class ETLDeltaTableToPostgres():
                  data_source: str,
                  source: str,
                  table: str,
+                 tartget_host: str,
+                 target_port: str,
+                 target_database: str,
+                 target_user: str,
+                 target_password: str,
                  *args, **kwargs):
         self.url_postgres = url_postgres
         self.properties_postgres = properties_postgres
@@ -26,6 +32,11 @@ class ETLDeltaTableToPostgres():
         self.table = table
         self.source = source
         self.source_path = f"s3a://{bucket_name_source}/{data_source}/{source}/{table}"
+        self.tartget_host = tartget_host
+        self.target_port = target_port
+        self.target_database = target_database
+        self.target_user = target_user
+        self.target_password = target_password
 
 
     def pre_execute(self):
@@ -56,9 +67,35 @@ class ETLDeltaTableToPostgres():
         return df
     
     def write_table(self, df):
-        df.write.jdbc(url=self.url_postgres, table=f"{self.table}", mode="overwrite", properties=self.properties_postgres)
-        print("Successfully wrote data to the data mart")
-        LOGGER.info("Successfully wrote data to the data mart")
+        # Establish psycopg2 connection to truncate table
+        try:
+            conn = psycopg2.connect(
+                host=self.tartget_host,
+                port=self.target_port,
+                database=self.target_database,
+                user=self.target_user,
+                password=self.target_password
+            )
+            cursor = conn.cursor()
+            cursor.execute(f"TRUNCATE TABLE public.{self.table}")
+            conn.commit()
+            cursor.close()
+            conn.close()
+            print(f"Successfully truncated table public.{self.table}")
+            LOGGER.info(f"Successfully truncated table public.{self.table}")
+        except Exception as e:
+            LOGGER.error(f"Failed to truncate table public.{self.table}: {str(e)}")
+            raise
+        
+        # Write DataFrame to PostgreSQL with append mode
+        df.write.jdbc(
+            url=self.url_postgres,
+            table=f"{self.table}",
+            mode="append",  # Changed from overwrite to append
+            properties=self.properties_postgres
+        )
+        print("Successfully appended data to the data mart")
+        LOGGER.info("Successfully appended data to the data mart")
         self.spark.stop()
 
     def main(self):
