@@ -79,14 +79,14 @@ class ETLDeltaTableToPostgresOverwriteV2():
                 password=self.target_password
             )
             cursor = conn.cursor()
-            cursor.execute(f"TRUNCATE TABLE public.{self.table}")
+            cursor.execute(f"TRUNCATE TABLE {self.schema}.{self.table}")
             conn.commit()
             cursor.close()
             conn.close()
-            print(f"Successfully truncated table public.{self.table}")
-            LOGGER.info(f"Successfully truncated table public.{self.table}")
+            print(f"Successfully truncated table {self.schema}.{self.table}")
+            LOGGER.info(f"Successfully truncated table {self.schema}.{self.table}")
         except Exception as e:
-            LOGGER.error(f"Failed to truncate table public.{self.table}: {str(e)}")
+            LOGGER.error(f"Failed to truncate table {self.schema}.{self.table}: {str(e)}")
             raise
         
         # Write DataFrame to PostgreSQL with append mode
